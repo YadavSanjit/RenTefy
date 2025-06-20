@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEasy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        [aria-hidden="true"] {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <script>
+        // Initial product data
+        let products = JSON.parse(localStorage.getItem('products')) || [
+            { id: 1, name: "Laptop", category: "Electronics", price: 50, period: "day", location: "New York", owner: "Demo User", image: "📱", description: "High-performance laptop for work or gaming" },
+            { id: 2, name: "Mountain Bike", category: "Sports", price: 30, period: "day", location: "Boston", owner: "Demo User", image: "🏀", description: "Sturdy bike for trail riding" },
+            { id: 3, name: "Camping Tent", category: "Outdoors", price: 20, period: "day", location: "Seattle", owner: "Demo User", image: "🏕️", description: "Spacious 4-person tent" },
+            { id: 4, name: "Power Drill", category: "Tools", price: 15, period: "day", location: "Chicago", owner: "Demo User", image: "🔧", description: "Cordless power drill with bits" },
+            { id: 5, name: "Pressure Cooker", category: "Kitchen", price: 10, period: "day", location: "Miami", owner: "Demo User", image: "🍳", description: "6-quart pressure cooker" }
+        ];
+
+        // User data
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+            name: "Guest User",
+            isLoggedIn: false,
+            listings: [],
+            rentals: []
+        };
+
+        // App state
+        let appState = JSON.parse(localStorage.getItem('appState')) || {
+            currentView: "home",
+            selectedProduct: null,
+            searchQuery: "",
+            filterCategory: "all",
+            myListings: [],
+            myRentals: []
+        };
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('appState', JSON.stringify(appState));
+        }
+
+        // Login the user
+        function login() {
+            currentUser = {
+                name: "Demo User",
+                isLoggedIn: true,
+                listings: products.filter(p => p.owner === "Demo User"),
+                rentals: currentUser.rentals
+            };
+            appState.myListings = currentUser.listings;
+            saveState();
+            renderApp();
+            showNotification("Logged in as Demo User");
+        }
+
+        // Logout the user
+        function logout() {
+            currentUser = {
+                name: "Guest User",
+                isLoggedIn: false,
+                listings: [],
+                rentals: []
+            };
+            appState.currentView = "home";
+            appState.myListings = [];
+            appState.myRentals = [];
+            saveState();
+            renderApp();
+            showNotification("Logged out successfully");
+        }
+
+        // Change the current view
+        function navigateTo(view, productId = null) {
+            appState.currentView = view;
+            if (productId) {
+                appState.selectedProduct = products.find(p => p.id === productId);
+            }
+            saveState();
+            renderApp();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Search products
+        function searchProducts(event) {
+            appState.searchQuery = event.target.value.toLowerCase().trim();
+            saveState();
+            renderApp();
+        }
+
+        // Filter by category
+        function filterByCategory(category) {
+            appState.filterCategory = category;
+            saveState();
+            renderApp();
+        }
+
+        // Validate input
+        function validateInput({ name, price, location, description }) {
+            if (name.length < 3 || name.length > 50) {
+                return "Item name must be between 3 and 50 characters";
+            }
+            if (price <= 0 || isNaN(price)) {
+                return "Price must be a positive number";
+            }
+            if (location.length < 2 || location.length > 50) {
+                return "Location must be between 2 and 50 characters";
+            }
+            if (description.length < 10 || description.length > 500) {
+                return "Description must be between 10 and 500 characters";
+            }
+            return null;
+        }
+
+        // Add a new listing
+        function addNewListing(event) {
+            event.preventDefault();
+            
+            if (!currentUser.isLoggedIn) {
+                showNotification("Please log in to add a listing", "error");
+                return;
+            }
+            
+            const form = event.target;
+            const newProduct = {
+                id: Math.max(...products.map(p => p.id), 0) + 1,
+                name: form.productName.value.trim(),
+                category: form.category.value,
+                price: parseFloat(form.price.value),
+                period: form.period.value,
+                location: form.location.value.trim(),
+                owner: currentUser.name,
+                image: getEmojiForCategory(form.category.value),
+                description: form.description.value.trim(),
+                isAvailable: true
+            };
+            
+            const validationError = validateInput(newProduct);
+            if (validationError) {
+                showNotification(validationError, "error");
+                return;
+            }
+            
+            try {
+                products.push(newProduct);
+                currentUser.listings.push(newProduct);
+                appState.myListings = currentUser.listings;
+                saveState();
+                navigateTo('myListings');
+                showNotification("Listing added successfully!");
+                form.reset();
+            } catch (error) {
+                showNotification("Failed to add listing", "error");
+            }
+        }
+
+        // Delete a listing
+        function deleteListing(productId) {
+            if (!currentUser.isLoggedIn) {
+                showNotification("Please log in to delete listings", "error");
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete this listing?")) {
+                try {
+                    products = products.filter(p => p.id !== productId);
+                    currentUser.listings = currentUser.listings.filter(p => p.id !== productId);
+                    appState.myListings = currentUser.listings;
+                    saveState();
+                    renderApp();
+                    showNotification("Listing deleted successfully");
+                } catch (error) {
+                    showNotification("Failed to delete listing", "error");
+                }
+            }
+        }
+
+        // Get emoji based on category
+        function getEmojiForCategory(category) {
+            const emojiMap = {
+                "Electronics": "📱",
+                "Sports": "🏀",
+                "Outdoors": "🏕️",
+                "Tools": "🔧",
+                "Kitchen": "🍳",
+                "Furniture": "🪑",
+                "Clothing": "👕",
+                "Books": "📚",
+                "Music": "🎸",
+                "Other": "📦"
+            };
+            return emojiMap[category] || "📦";
+        }
+
+        // Rent a product
+        function rentProduct(productId) {
+            if (!currentUser.isLoggedIn) {
+                showNotification("Please log in to rent items", "error");
+                return;
+            }
+            
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                showNotification("Product not found", "error");
+                return;
+            }
+            
+            if (!product.isAvailable) {
+                showNotification("This item is currently unavailable", "error");
+                return;
+            }
+            
+            if (currentUser.listings.some(p => p.id === productId)) {
+                showNotification("You cannot rent your own listing", "error");
+                return;
+            }
+            
+            try {
+                const rentalDetails = {
+                    ...product,
+                    rentalId: Date.now(),
+                    startDate: new Date().toISOString().split('T')[0],
+                    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: "Active"
+                };
+                
+                product.isAvailable = false;
+                currentUser.rentals.push(rentalDetails);
+                appState.myRentals = currentUser.rentals;
+                saveState();
+                navigateTo('myRentals');
+                showNotification(`You've successfully rented: ${product.name}`);
+            } catch (error) {
+                showNotification("Failed to rent item", "error");
+            }
+        }
+
+        // Return a rented item
+        function returnRental(rentalId) {
+            if (!currentUser.isLoggedIn) {
+                showNotification("Please log in to return items", "error");
+                return;
+            }
+            
+            try {
+                const rental = currentUser.rentals.find(r => r.rentalId === rentalId);
+                if (!rental) {
+                    showNotification("Rental not found", "error");
+                    return;
+                }
+                
+                if (rental.status !== "Active") {
+                    showNotification("This rental is not active", "error");
+                    return;
+                }
+                
+                const product = products.find(p => p.id === rental.id);
+                if (product) {
+                    product.isAvailable = true;
+                }
+                
+                rental.status = "Returned";
+                rental.endDate = new Date().toISOString().split('T')[0];
+                appState.myRentals = currentUser.rentals;
+                saveState();
+                renderApp();
+                showNotification("Item returned successfully");
+            } catch (error) {
+                showNotification("Failed to return item", "error");
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = "success") {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = type === "success" 
+                ? "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50 transition-opacity duration-300"
+                : "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-50 transition-opacity duration-300";
+            
+            notification.style.opacity = "1";
+            notification.setAttribute('aria-live', 'polite');
+            
+            setTimeout(() => {
+                notification.style.opacity = "0";
+                setTimeout(() => notification.setAttribute('aria-hidden', 'true'), 300);
+            }, 3000);
+        }
+
+        // Render the application
+        function renderApp() {
+            const mainContent = document.getElementById('mainContent');
+            
+            // Filter products
+            let filteredProducts = products.filter(p => p.isAvailable);
+            
+            if (appState.searchQuery) {
+                filteredProducts = filteredProducts.filter(p => 
+                    p.name.toLowerCase().includes(appState.searchQuery) || 
+                    p.description.toLowerCase().includes(appState.searchQuery) ||
+                    p.location.toLowerCase().includes(appState.searchQuery)
+                );
+            }
+            
+            if (appState.filterCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(p => p.category === appState.filterCategory);
+            }
+            
+            // Update header
+            const authButton = document.getElementById('authButton');
+            const userDisplay = document.getElementById('userDisplay');
+            
+            if (currentUser.isLoggedIn) {
+                authButton.textContent = "Logout";
+                authButton.onclick = logout;
+                userDisplay.textContent = currentUser.name;
+                userDisplay.classList.remove("hidden");
+            } else {
+                authButton.textContent = "Login";
+                authButton.onclick = login;
+                userDisplay.classList.add("hidden");
+            }
+            
+            // Render view
+            switch(appState.currentView) {
+                case 'home':
+                    mainContent.innerHTML = renderHomeView(filteredProducts);
+                    break;
+                case 'productDetail':
+                    mainContent.innerHTML = renderProductDetailView();
+                    break;
+                case 'addListing':
+                    mainContent.innerHTML = renderAddListingView();
+                    break;
+                case 'myListings':
+                    mainContent.innerHTML = renderMyListingsView();
+                    break;
+                case 'myRentals':
+                    mainContent.innerHTML = renderMyRentalsView();
+                    break;
+                default:
+                    mainContent.innerHTML = renderHomeView(filteredProducts);
+            }
+            
+            // Add event listeners
+            setupEventListeners();
+        }
+
+        // Setup event delegation
+        function setupEventListeners() {
+            const mainContent = document.getElementById('mainContent');
+            
+            mainContent.addEventListener('click', (e) => {
+                const target = e.target.closest('button[data-action]');
+                if (!target) return;
+                
+                const action = target.dataset.action;
+                const productId = parseInt(target.dataset.productId);
+                const rentalId = parseInt(target.dataset.rentalId);
+                
+                switch(action) {
+                    case 'viewDetails':
+                        navigateTo('productDetail', productId);
+                        break;
+                    case 'rent':
+                        rentProduct(productId);
+                        break;
+                    case 'delete':
+                        deleteListing(productId);
+                        break;
+                    case 'return':
+                        returnRental(rentalId);
+                        break;
+                }
+            });
+            
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(searchProducts, 300));
+            }
+            
+            const categorySelect = document.querySelector('select[data-action="filter"]');
+            if (categorySelect) {
+                categorySelect.addEventListener('change', (e) => filterByCategory(e.target.value));
+            }
+        }
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Render home view
+        function renderHomeView(products) {
+            const categories = ["all", "Electronics", "Sports", "Outdoors", "Tools", "Kitchen", "Furniture", "Clothing", "Books", "Music", "Other"];
+            
+            return `
+                <section class="hero-gradient text-white py-16 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
+                    <div class="max-w-7xl mx-auto">
+                        <h1 id="hero-heading" class="text-4xl font-bold mb-4">Rent Anything, Anytime</h1>
+                        <p class="text-xl mb-8">Find what you need or make money renting out items you own</p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button onclick="navigateTo('addListing')" class="bg-white text-indigo-700 font-semibold py-3 px-6 rounded-lg hover:bg-opacity-90 transition" aria-label="List your item">List Your Item</button>
+                            <a href="#browse" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" aria-label="Browse items">Browse Items</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="browse" class="py-12 px-4 sm:px-6 lg:px-8 bg-white" aria-labelledby="browse-heading">
+                    <div class="max-w-7xl mx-auto">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                            <h2 id="browse-heading" class="text-3xl font-bold text-gray-900">Available Items</h2>
+                            <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                                <div class="relative flex-grow">
+                                    <input id="searchInput" type="text" placeholder="Search items..." value="${appState.searchQuery}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-label="Search items">
+                                    <span class="absolute right-2 top-2 text-gray-400">🔍</span>
+                                </div>
+                                <select data-action="filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-label="Filter by category">
+                                    ${categories.map(cat => `<option value="${cat}" ${appState.filterCategory === cat ? 'selected' : ''}>${cat === 'all' ? 'All Categories' : cat}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+
+                        ${products.length === 0 ? 
+                            `<div class="text-center py-12">
+                                <p class="text-xl text-gray-600">No items found matching your criteria</p>
+                                <button onclick="appState.searchQuery = ''; appState.filterCategory = 'all'; renderApp();" class="mt-4 text-indigo-600 hover:text-indigo-800 font-medium" aria-label="Clear filters">Clear filters</button>
+                            </div>` : 
+                            `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                ${products.map(product => `
+                                    <article class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100 transition-all duration-300 card-hover" aria-labelledby="product-${product.id}">
+                                        <div class="p-6 bg-gray-50 flex items-center justify-center text-5xl">
+                                            ${product.image}
+                                        </div>
+                                        <div class="p-6">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <h3 id="product-${product.id}" class="text-xl font-semibold text-gray-900 mb-1">${product.name}</h3>
+                                                    <p class="text-gray-500 text-sm mb-2">${product.location} • ${product.category}</p>
+                                                </div>
+                                                <div class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                    $${product.price}/${product.period}
+                                                </div>
+                                            </div>
+                                            <p class="text-gray-600 mt-3 line-clamp-2">${product.description}</p>
+                                            <div class="mt-4 flex justify-between items-center">
+                                                <span class="text-sm text-gray-500">Owner: ${product.owner}</span>
+                                                <button data-action="viewDetails" data-product-id="${product.id}" class="text-indigo-600 hover:text-indigo-800 font-medium" aria-label="View details for ${product.name}">View Details</button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                </section>
+
+                <section class="py-12 px-4 sm:px-6 lg:px-8 bg-gray-50" aria-labelledby="how-it-works">
+                    <div class="max-w-7xl mx-auto text-center">
+                        <h2 id="how-it-works" class="text-3xl font-bold text-gray-900 mb-8">How It Works</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="text-4xl mb-4" aria-hidden="true">📝</div>
+                                <h3 class="text-xl font-semibold mb-2">List Your Items</h3>
+                                <p class="text-gray-600">Take photos and create listings for items you want to rent out</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="text-4xl mb-4" aria-hidden="true">🔍</div>
+                                <h3 class="text-xl font-semibold mb-2">Find What You Need</h3>
+                                <p class="text-gray-600">Search for items by category, location, or specific keywords</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm">
+                                <div class="text-4xl mb-4" aria-hidden="true">🤝</div>
+                                <h3 class="text-xl font-semibold mb-2">Rent & Return</h3>
+                                <p class="text-gray-600">Arrange pickup/delivery and return items when you're done</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            `;
+        }
+
+        // Render product detail view
+        function renderProductDetailView() {
+            const product = appState.selectedProduct;
+            if (!product) return '<div class="text-center py-12">Product not found</div>';
+            
+            return `
+                <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    <button onclick="navigateTo('home')" class="flex items-center text-indigo-600 hover:text-indigo-800 mb-6" aria-label="Back to listings">
+                        <svg class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Back to listings
+                    </button>
+                    
+                    <article class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100" aria-labelledby="product-detail-${product.id}">
+                        <div class="md:flex">
+                            <div class="md:w-1/3 bg-gray-50 flex items-center justify-center p-12">
+                                <div class="text-9xl" aria-hidden="true">${product.image}</div>
+                            </div>
+                            <div class="md:w-2/3 p-8">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h1 id="product-detail-${product.id}" class="text-3xl font-bold text-gray-900 mb-2">${product.name}</h1>
+                                        <p class="text-gray-600 mb-4">${product.location} • ${product.category}</p>
+                                    </div>
+                                    <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-lg font-semibold">
+                                        $${product.price}/${product.period}
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-200 my-6 pt-6">
+                                    <h2 class="text-xl font-semibold mb-3">Description</h2>
+                                    <p class="text-gray-700 mb-6">${product.description}</p>
+                                    
+                                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                                        <h3 class="font-medium text-gray-900 mb-2">Owner Information</h3>
+                                        <p class="text-gray-700">Listed by: ${product.owner}</p>
+                                    </div>
+                                    
+                                    <button data-action="rent" data-product-id="${product.id}" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" ${product.isAvailable ? '' : 'disabled'} aria-label="Rent ${product.name}">
+                                        ${product.isAvailable ? 'Rent This Item' : 'Currently Unavailable'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            `;
+        }
+
+        // Render add listing view
+        function renderAddListingView() {
+            const categories = ["Electronics", "Sports", "Outdoors", "Tools", "Kitchen", "Furniture", "Clothing", "Books", "Music", "Other"];
+            
+            return `
+                <div class="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-8">List Your Item for Rent</h1>
+                    
+                    ${!currentUser.isLoggedIn ? 
+                        `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6" role="alert">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700">
+                                        You need to be logged in to list items. <button onclick="login()" class="font-medium underline text-yellow-700 hover:text-yellow-600" aria-label="Login">Login now</button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>` 
+                        : ''
+                    }
+                    
+                    <form onsubmit="addNewListing(event)" class="space-y-6 bg-white p-6 rounded-xl shadow-md">
+                        <div>
+                            <label for="productName" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                            <input type="text" id="productName" name="productName" required minlength="3" maxlength="50" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select id="category" name="category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                                    ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                                <input type="text" id="location" name="location" required minlength="2" maxlength="50" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">$</span>
+                                    </div>
+                                    <input type="number" id="price" name="price" min="0.01" step="0.01" required class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="period" class="block text-sm font-medium text-gray-700 mb-1">Rental Period</label>
+                                <select id="period" name="period" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                                    <option value="hour">Per Hour</option>
+                                    <option value="day" selected>Per Day</option>
+                                    <option value="week">Per Week</option>
+                                    <option value="month">Per Month</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="description" name="description" rows="4" required minlength="10" maxlength="500" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" aria-required="true"></textarea>
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" ${!currentUser.isLoggedIn ? 'disabled' : ''} aria-label="List your item">
+                                List Your Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        // Render my listings view
+        function renderMyListingsView() {
+            if (!currentUser.isLoggedIn) {
+                return `
+                    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-6">My Listings</h1>
+                        <div class="bg-white p-8 rounded-xl shadow-md">
+                            <p class="text-xl text-gray-600 mb-6">You need to be logged in to view your listings</p>
+                            <button onclick="login()" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" aria-label="Login">Login</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900">My Listings</h1>
+                        <button onclick="navigateTo('addListing')" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition" aria-label="Add new listing">Add New Listing</button>
+                    </div>
+                    
+                    ${appState.myListings.length === 0 ? 
+                        `<div class="bg-white p-8 rounded-xl shadow-md text-center">
+                            <p class="text-xl text-gray-600 mb-6">You don't have any listings yet</p>
+                            <button onclick="navigateTo('addListing')" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" aria-label="Create your first listing">Create Your First Listing</button>
+                        </div>` :
+                        `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${appState.myListings.map(product => `
+                                <article class="bg-white rounded-xl overflow-hidden shadow-md border border-gray-100" aria-labelledby="listing-${product.id}">
+                                    <div class="p-6 bg-gray-50 flex items-center justify-center text-5xl">
+                                        ${product.image}
+                                    </div>
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 id="listing-${product.id}" class="text-xl font-semibold text-gray-900 mb-1">${product.name}</h3>
+                                                <p class="text-gray-500 text-sm mb-2">${product.location} • ${product.category}</p>
+                                            </div>
+                                            <div class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                $${product.price}/${product.period}
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-600 mt-3 line-clamp-2">${product.description}</p>
+                                        <div class="mt-4 flex justify-between items-center gap-2">
+                                            <button data-action="viewDetails" data-product-id="${product.id}" class="text-indigo-600 hover:text-indigo-800 font-medium" aria-label="View details for ${product.name}">View Details</button>
+                                            <button data-action="delete" data-product-id="${product.id}" class="text-red-600 hover:text-red-800 font-medium" aria-label="Delete ${product.name}">Delete</button>
+                                        </div>
+                                    </div>
+                                </article>
+                            `).join('')}
+                        </div>`
+                    }
+                </div>
+            `;
+        }
+
+        // Render my rentals view
+        function renderMyRentalsView() {
+            if (!currentUser.isLoggedIn) {
+                return `
+                    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-center">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-6">My Rentals</h1>
+                        <div class="bg-white p-8 rounded-xl shadow-md">
+                            <p class="text-xl text-gray-600 mb-6">You need to be logged in to view your rentals</p>
+                            <button onclick="login()" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" aria-label="Login">Login</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-8">My Rentals</h1>
+                    
+                    ${currentUser.rentals.length === 0 ? 
+                        `<div class="bg-white p-8 rounded-xl shadow-md text-center">
+                            <p class="text-xl text-gray-600 mb-6">You haven't rented any items yet</p>
+                            <button onclick="navigateTo('home')" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition" aria-label="Browse items to rent">Browse Items to Rent</button>
+                        </div>` :
+                        `<div class="bg-white rounded-xl shadow-md overflow-hidden">
+                            <table class="min-w-full divide-y divide-gray-200" role="grid">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rental Period</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${currentUser.rentals.map(rental => `
+                                        <tr role="row">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="text-3xl mr-3" aria-hidden="true">${rental.image}</div>
+                                                    <div>
+                                                        <div class="text-sm font-medium text-gray-900">${rental.name}</div>
+                                                        <div class="text-sm text-gray-500">${rental.location}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">${rental.startDate}</div>
+                                                <div class="text-sm text-gray-500">to ${rental.endDate}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">$${rental.price}/${rental.period}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${rental.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                                    ${rental.status}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button data-action="viewDetails" data-product-id="${rental.id}" class="text-indigo-600 hover:text-indigo-900 mr-2" aria-label="View details for ${rental.name}">View Details</button>
+                                                ${rental.status === 'Active' ? 
+                                                    `<button data-action="return" data-rental-id="${rental.rentalId}" class="text-blue-600 hover:text-blue-900" aria-label="Return ${rental.name}">Return</button>` : ''
+                                                }
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>`
+                    }
+                </div>
+            `;
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            renderApp();
+        });
+    </script>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10" role="banner">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <button onclick="navigateTo('home')" class="text-indigo-600 font-bold text-xl" aria-label="RentEasy Home">RentEasy</button>
+                    </div>
+                    <nav class="hidden sm:ml-6 sm:flex sm:space-x-8" aria-label="Main navigation">
+                        <button onclick="navigateTo('home')" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" aria-current="page">Browse</button>
+                        <button onclick="navigateTo('addListing')" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">List an Item</button>
+                        <button onclick="navigateTo('myListings')" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">My Listings</button>
+                        <button onclick="navigateTo('myRentals')" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">My Rentals</button>
+                    </nav>
+                </div>
+                <div class="flex items-center">
+                    <span id="userDisplay" class="mr-4 text-sm font-medium text-gray-700 hidden" aria-hidden="true"></span>
+                    <button id="authButton" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition" aria-label="Login">Login</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <nav class="sm:hidden border-t border-gray-200" aria-label="Mobile navigation">
+            <div class="flex justify-between px-4 py-3 flex-wrap gap-2">
+                <button onclick="navigateTo('home')" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">Browse</button>
+                <button onclick="navigateTo('addListing')" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">List an Item</button>
+                <button onclick="navigateTo('myListings')" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">My Listings</button>
+                <button onclick="navigateTo('myRentals')" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">My Rentals</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContent" role="main">
+        <!-- Content will be dynamically inserted here -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 px-4 sm:px-6 lg:px-8" role="contentinfo">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">RentEasy</h3>
+                    <p class="text-gray-300">The easiest way to rent items in your community or make money from things you own.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2" role="list">
+                        <li><button onclick="navigateTo('home')" class="text-gray-300 hover:text-white" aria-label="Browse items">Browse Items</button></li>
+                        <li><button onclick="navigateTo('addListing')" class="text-gray-300 hover:text-white" aria-label="List an item">List an Item</button></li>
+                        <li><button onclick="navigateTo('myListings')" class="text-gray-300 hover:text-white" aria-label="My listings">My Listings</button></li>
+                        <li><button onclick="navigateTo('myRentals')" class="text-gray-300 hover:text-white" aria-label="My rentals">My Rentals</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact</h3>
+                    <p class="text-gray-300">Email: support@renteasy.example</p>
+                    <p class="text-gray-300">Phone: (555) 123-4567</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+                <p clsss="text-gray-300">© 2025 RentEasy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification -->
+    <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-50 transition-opacity duration-300 opacity-0" aria-hidden="true" role="alert">
+        Notification message
+    </div>
+</body>
+</html>

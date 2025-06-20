@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade checker</title>
+    <style>
+        *{
+            margin: 0px;
+            padding: 0%;
+        }
+        .main{
+            background-color: #3f05ab;
+            display: flex;
+            height: 100%;
+            align-self: center;
+            justify-content: center;
+           
+        }
+        .box{
+            height: 400px;
+            width: 800px;
+            display: flex;
+            align-self: center;
+            justify-content: center;
+            border: px solid black;
+            padding: 60px;
+            margin: 150px;
+            margin-right: -50px;
+            box-shadow: 0 0 50px rgb(246, 238, 238);
+            border-radius: 40px;
+            transition: 0.3s ease-in-out;
+        }
+        .box:hover{
+            width: 830px;
+            height: 430px;
+            border-radius: 50px;
+            box-shadow: 0 0 50px rgb(249, 5, 5);
+           
+        }
+        .lbox{
+            padding: 30px;
+            font-weight :bolder;
+            font-size: xx-large;
+            font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            margin-left: 20px;
+            margin-top: 20px;
+            color: rgb(242, 245, 90);
+        }
+        .rbox{
+           margin-top: 20px;
+           line-height: 50px;
+        }
+        #result{
+        text-align: center;
+        margin-top: 20px;
+        font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif ;
+        font-size: larger;
+        }
+       input {
+            border-radius: 30px;
+            border: 2px solid ;
+            height: 30px;
+            width: 500px;
+            margin-top: 20px;
+            padding-left: 30px;
+            background: transparent;
+            font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            font-weight: bold;
+            font-size: 17px;
+            border-top: none;
+            border-right: none;
+            color: antiquewhite;
+            box-shadow:  0 0  12px;
+            transition: 0.3s ease;          
+        }
+        input:hover{
+            color: rgb(251, 19, 19);
+        }
+        ::placeholder{
+            color: rgb(250, 250, 8);
+            text-align: center;
+        }
+        #button{
+            border-radius: 30px;
+            height: 30px;
+            width: 200px;
+           margin-left: 130px;
+           color: antiquewhite;
+           transition: 1s ease;
+        }
+        #button:hover{
+            background-color: chartreuse;
+           
+            cursor: pointer;
+            color: rgb(246, 238, 238);
+            box-shadow:  0 0  42px;
+        }
+        .check
+        {
+            position: absolute;
+            display: flex;
+            margin-top: 30px;
+            padding-right: 30px;
+            border: 2px solid black;
+            border-radius: 22px;
+            box-shadow: 0 0 50px rgb(248, 245, 245);
+            background-color: #3f05ab;
+            
+        }
+       .check:hover{
+        box-shadow: 0 0 50px rgb(249, 5, 5);  
+        transform: translateY(0);
+        }
+        h1{
+            width: 50%;
+           margin: 17px;    
+           padding-left: 10px;
+           transition: 3s ease;
+        }
+    
+        .menu{
+            position: absolute;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            width: 200px;    
+          
+            
+        }
+        ul{
+            display: flex;
+            flex-direction: column;
+            width: 57%;
+            padding: 30px;        
+            margin-top: 80px;
+            padding-bottom: 87px;
+            font-weight: bolder;
+            font-family: sans-serif;
+            font-size: larger;  
+            transition: 3s ease;          
+            transform: translateY(-490px);      
+        }
+        .ul:hover{
+            transform: translateY(0);
+            border-right: 2px solid black;
+            box-shadow: 0 0 50px rgb(249, 5, 5);  
+            
+        }
+        li{
+            margin-top: 50px;
+            display: block;
+            transition: 0.3s ease;
+            border-radius: 22px;
+            align-items: center;
+            padding: 10px;
+            width: 100%;
+            font-weight: bolder;
+            font-size: x-large;           
+            font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+        li:hover{
+           
+            box-shadow:  0 0  32px rgb(251, 19, 19);
+            font-weight: bolder;
+        }
+    /* .check input:checked ~ .ul{
+        transform: translateX(-60px);        
+    }
+     */
+
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <div class="check">
+         
+            <h1>MENU</h1>
+        </div>
+        
+        <ul class="ul" id="ul" type="none">
+            <li type="none">HOME</li>
+            <li>FEATURES</li>
+            <li>PORTALS</li>
+            <li>ABOUT US</li>
+        </ul>
+    </div>
+    <div class="main">
+     
+        <div class="box">
+            <div class="lbox">
+                <p>CHECK</p>
+                <p>your</p>
+                <p>GRADE</p>
+            </div>
+            <div class="rbox">
+                <input type="number" name="" class="sub1" id="sub1" required placeholder="english">
+                <input type="number" name="" class="sub2" id="sub2" required placeholder="math">
+                <input type="number" name="" class="sub3" id="sub3" required placeholder="Programing">
+                <input type="number" name="" class="sub4" id="sub4" required placeholder="webTechnology">
+                <input type="number" name="" class="sub5" id="sub5" required placeholder="Fundamentals"><br>
+                <input type="button" value=" CHECK "  id="button" onclick="cal()"> 
+                
+                <div id="result">
+                   <span id="show"></span>
+                </div>
+            </div>
+
+        </div>
+       
+    </div>
+   <script>
+    function cal(){
+    let sub1 = parseInt(document.getElementById('sub1').value)
+    let sub2 = parseInt(document.getElementById('sub2').value)
+    let sub3 = parseInt(document.getElementById('sub3').value)
+    let sub4 = parseInt(document.getElementById('sub4').value)
+    let sub5 = parseInt(document.getElementById('sub5').value)
+    
+    let total = sub1 + sub2 + sub3 + sub4 + sub5; 
+    let perc = parseInt((total/500)*100);
+    if(perc>=90)
+    {
+        grade ='A'
+    }else if(perc>=80){
+        grade='B'
+    }else if(perc>=70){
+    grade = 'C'
+}else{
+    grade='D'
+}
+    // alert(`your Total Marks is ${total} perctage: ${perc} and grade :${grade}`)
+  let res = document.getElementById("show")
+  res.innerHTML = `your Total Marks is ${total} perctage: ${perc}% and grade :${grade}`
+  res.style.color="white"
+  res.style.boxShadow = "0 0 10px"
+  res.style.fontSize = "larger"
+   
+}
+function trans(){
+    let a = document.getElementById("ul")
+    let slide = "on"
+    a.addEventListener("click",()=>{
+        if(slide=="on")
+{
+    a.style.color="red"
+    slide = "off"
+}else {
+     a.style.color="green"
+     let slide = "on"
+}
+
+    })
+   
+}
+   </script>
+</body>
+</html>

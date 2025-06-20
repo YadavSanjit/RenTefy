@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RenteFy - Rent or Sell Anything</title>
+    <link rel="stylesheet" href="project.css">
+    <style>
+        /* Basic CSS for layout, slider, and modal */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            /* background-color: #333; */
+            color: white;
+        }
+        .nav-bar .logo {
+            font-size: 24px;
+            width: 20%;
+            font-weight: bold;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .nav-links input {
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+        .trending-section {
+            text-align: center;
+            padding: 20px;
+        }
+        .slider-container {
+            position: relative;
+            max-width: 1500px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .slide {
+            min-width: 200px;
+            margin: 10px;
+            text-align: center;
+        }
+        .slide img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .left-arrow {
+            left: 10px;
+        }
+        .right-arrow {
+            right: 10px;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .item-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            text-align: center;
+        }
+        .item-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .item-info {
+            padding: 10px;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 10px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 50%;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <nav class="nav-bar">
+            <div class="logo">RenteFy</div>
+            <div class="nav-links">
+                <label for="search" class="sr-only">Search products</label>
+                <input type="search" id="search" placeholder="Search...">
+                <a href="#">Home</a>
+                <a href="addyourproduct.html">Rent</a>
+                <a href="addyourproduct.html">Sell</a>
+                <a href="contact.html">Help & Support</a>
+                <a href="about.html">About Us</a>
+                <a href="login.html">Login</a>
+                <a href="signup.html">Sign Up</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Trending Section -->
+    <section class="trending-section">
+        <h2>Trending Products</h2>
+        <div class="slider-container">
+            <div class="slider" id="slider">
+                <div class="slide">
+                    <img src="m416.webp" alt="Automatic Rifle" onclick="openModal(this.src)">
+                    <p>Automatic Rifle</p>
+                </div> <div class="slide">
+                    <img src="drone.webp" alt="Surveillance Drone" onclick="openModal(this.src)">
+                    <p>Surveillance Drone</p>
+                </div>
+                <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                <div class="slide">
+                    <img src="drone.webp" alt="Surveillance Drone" onclick="openModal(this.src)">
+                    <p>Surveillance Drone</p>
+                </div>
+                <div class="slide">
+                    <img src="black_horse.webp" alt="Lamjung Horse" onclick="openModal(this.src)">
+                    <p>Lamjung Horse</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+                 <div class="slide">
+                    <img src="mt2.webp" alt="Yamaha MT-15 Motorcycle" onclick="openModal(this.src)">
+                    <p>Yamaha MT-15</p>
+                </div>
+            </div>
+            <button class="arrow left-arrow" onclick="moveSlider(-1)">❮</button>
+            <button class="arrow right-arrow" onclick="moveSlider(1)">❯</button>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main>
+        <h2>Select Your Desired Product</h2><br>
+     <div class="cat">
+        <label for="category" id="cat" class="block text-sm font-medium text-gray-700">Select Category</label>
+        <select id="category" name="category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="" disabled selected>Select a category</option>
+          <option value="apartments">Electronics</option>
+          <option value="houses">Apartments</option>
+          <option value="cars">Cars</option>
+          <option value="electronics">Electronics</option>
+          <option value="electronics">Sports</option>
+        </select>
+      </div>
+        <div class="main-content">
+            <div class="item-card">
+                <img src="projectror.webp" alt="4K Projector" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>4K Projector</h3>
+                    <p>Rs. 1,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="imax.webp" alt="Cinematic Camera V3" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Cinematic Camera V3</h3>
+                    <p>Rs. 50,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="watch.webp" alt="Timex Watch" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Timex Watch</h3>
+                    <p>Rs. 5,000/week</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="viber_image_2025-05-13_09-51-34-396.jpg" alt="Lamjung Horse" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Lamjung Horse</h3>
+                    <p>Rs. 30,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="nightvison.webp" alt="Night Vision Goggles" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Night Vision Goggles</h3>
+                    <p>Rs. 800/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="ps5.webp" alt="PlayStation 5" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>PlayStation 5</h3>
+                    <p>Rs. 5,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="boat.webp" alt="Speed Boat" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Speed Boat</h3>
+                    <p>Rs. 10,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="consew_machine.webp" alt="Consew Sewing Machine" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Consew Sewing Machine</h3>
+                    <p>Rs. 50,000/week</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="m416.webp" alt="Automatic Rifle" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Automatic Rifle</h3>
+                    <p>Rs. 5,500/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="cd.webp" alt="GTA 5 Game Disc" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>GTA 5</h3>
+                    <p>Rs. 500/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="drone.webp" alt="Surveillance Drone" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Surveillance Drone</h3>
+                    <p>Rs. 2,000/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="drone-2021.webp" alt="Cinematic Drone" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Cinematic Drone</h3>
+                    <p>Rs. 999/day</p>
+                </div>
+            </div>
+            <div class="item-card">
+                <img src="mtt.webp" alt="Yamaha MT-15 V3 Motorcycle" onclick="openModal(this.src)">
+                <div class="item-info">
+                    <h3>Yamaha MT-15 V3</h3>
+                    <p>Rs. 500/day</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage" alt="Enlarged product image">
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>
+            <p>© Copyright 2025 RenteFy</p>
+        </div>
+        <div>
+            <p>Contact:</p>
+            <p>Phone: +977 980-000-0000</p>
+            <p>Email: rentefy1@gmail.com</p>
+        </div>
+    </footer>
+
+    <script>
+        // Slider functionality
+        let currentSlide = 0;
+        const slider = document.getElementById('slider');
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function moveSlider(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            } else if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            }
+            slider.style.transform = `translateX(-${currentSlide * (100 / 4)}%)`;
+        }
+
+        // Auto-scroll every 3 seconds
+        setInterval(() => moveSlider(1), 3000);
+
+        // Modal functionality
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+
+        function openModal(src) {
+            modal.style.display = 'flex';
+            modalImg.src = src;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside the image
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

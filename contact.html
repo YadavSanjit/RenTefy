@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Us - Rentify</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f9f9f9;
+    }
+    h2 {
+      color: #333;
+    }
+    .contact-form {
+      max-width: 500px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .note {
+      font-size: 14px;
+      color: #666;
+    }
+    audio {
+      display: block;
+      margin-top: 10px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Contact Us</h2>
+  <div class="contact-form">
+    <form onsubmit="alert('Message sent!'); return false;">
+      <label>Your Name</label>
+      <input type="text" placeholder="Enter your name" required />
+
+      <label>Email</label>
+      <input type="email" placeholder="Enter your email" required />
+
+      <label>Message</label>
+      <textarea rows="5" placeholder="Write your message here..." required></textarea>
+
+      <hr>
+      <h4>🎤 Record a Voice Message</h4>
+      <button id="startBtn">Start Recording</button>
+      <button id="stopBtn" disabled>Stop Recording</button>
+      <audio id="audioPlayback" controls></audio>
+  
+
+   
+  
+    <script>
+      let mediaRecorder;
+      let audioChunks = [];
+  
+      const startBtn = document.getElementById("startBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const audioPlayback = document.getElementById("audioPlayback");
+  
+      startBtn.onclick = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        audioChunks = [];
+  
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          audioPlayback.src = audioUrl;
+        };
+  
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      };
+  
+      stopBtn.onclick = () => {
+        mediaRecorder.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      };
+    </script>
+  
+
+
+      <button type="submit">Send Message</button>
+    </form>
+</div>
+   
+</body>
+</html>

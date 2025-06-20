@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Up - Rentify</title>
+</head>
+
+<body>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .signup-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 350px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .msg {
+      color: green;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    #documentField {
+      display: none;
+    }
+
+    label {
+      font-size: 14px;
+      color: #333;
+    }
+
+    #documentPreview {
+      display: none;
+      margin-top: 10px;
+      max-width: 100%;
+      border-radius: 5px;
+    }
+
+    #userList {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      color: #333;
+      white-space: pre-wrap;
+    }
+  </style>
+
+
+  <div class="signup-container">
+    
+    <h2>Create Account</h2> <input type="text" id="name" placeholder="Full Name" /> <input type="email" id="email"
+      placeholder="Email" /> <input type="password" id="password" placeholder="Password" />
+
+    <select id="userType" onchange="toggleDocumentField()">
+      <option value="buyer">Buyer</option>
+      <option value="seller">Seller</option>
+    </select>
+
+    <div id="documentField">
+      <label for="document">Upload Citizenship / License / Passport (PDF or Image):</label>
+      <input type="file" id="document" accept="image/*,.pdf" onchange="previewDocument()" />
+      <img id="documentPreview" alt="Document Preview" />
+    </div>
+
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="showUsers()">Show All Users</button>
+
+    <div class="msg" id="message"></div>
+    <pre id="userList"></pre>
+
+
+  </div>
+  <script>    function toggleDocumentField() { const userType = document.getElementById('userType').value; document.getElementById('documentField').style.display = userType === 'seller' ? 'block' : 'none'; } function previewDocument() { const fileInput = document.getElementById('document'); const preview = document.getElementById('documentPreview'); const file = fileInput.files[0]; if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = function (e) { preview.src = e.target.result; preview.style.display = 'block'; }; reader.readAsDataURL(file); } else { preview.style.display = 'none'; } } function signup() { const name = document.getElementById('name').value.trim(); const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value.trim(); const userType = document.getElementById('userType').value; const documentFile = document.getElementById('document').files[0]; if (!name || !email || !password) { alert("Please fill in all fields."); return; } if (userType === 'seller' && !documentFile) { alert("Sellers must upload a valid document."); return; }      // Get existing users or start with an empty array      const existingUsers = JSON.parse(localStorage.getItem("rentifyUsers")) || [];      // Check for duplicate email      const emailExists = existingUsers.some(user => user.email === email);      if (emailExists) {        alert("Email already registered.");        return;      }      // Create new user object      const newUser = { name, email, password, userType };      // Push and save      existingUsers.push(newUser);      localStorage.setItem("rentifyUsers", JSON.stringify(existingUsers));      document.getElementById('message').innerText = "Sign up successful!";      // Reset form      document.getElementById('name').value = "";      document.getElementById('email').value = "";      document.getElementById('password').value = "";      document.getElementById('userType').value = "buyer";      document.getElementById('documentField').style.display = "none";      document.getElementById('document').value = "";      document.getElementById('documentPreview').style.display = "none";      document.getElementById('userList').innerText = "";    }    function showUsers() {      const users = JSON.parse(localStorage.getItem("rentifyUsers")) || [];      document.getElementById("userList").innerText = JSON.stringify(users, null, 2);    }  </script>
+</body>
+
+</html>

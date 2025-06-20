@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="form" onclick="submit()">
+        <div class="Name">Name:<input type="text" id="name"></div>
+        <div class="contact">Contact: <input type="number" id="contact"></div>
+        <div class="gmail">Gmail: <input type="email" id="email"></div>
+        <div class="pass">Password: <input type="password" id="pass"></div>
+        <div class="btn"><input type="button" value="Submit"></div>
+
+    </div>
+<script>
+     function submit(){
+        var name = document.getElementById("name").value
+        var cont = document.getElementById("contact").value
+        var email = document.getElementById("email").value
+        var pass = document.getElementById("pass").value
+       let isvalid = true;
+        if(name == "")
+     {
+        alert("please fill the name");
+        isvalid = false;
+     }
+     if(cont > 10 || cont <10){
+
+        alert("provide adjact number");
+     }
+    //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    //         if (!emailRegex.test(email)) {
+    //             document.getElementById('email-error').style.display = 'block';
+    //             isvalid = false;
+    //         }
+        if(pass<6)  
+        {
+            alert("password must be greater than 6 chartr")
+        }  
+
+        return isvalid;
+      }
+</script>
+</body>
+</html>
